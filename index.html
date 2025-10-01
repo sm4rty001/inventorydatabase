@@ -40392,6 +40392,44 @@
         : "No filters applied";
     }
 
+function initialize(table) {
+  const headerCells = Array.from(table.querySelectorAll("thead th, thead td"));
+  const colIndexByName = {};
+  headerCells.forEach((th, idx) => {
+    colIndexByName[th.textContent.trim().toLowerCase()] = idx;
+  });
+
+  platformIdx = getColIndex(colIndexByName, ["platform","console","system"]) ?? 0;
+  locationIdx = getColIndex(colIndexByName, ["location","branch","site"]) ?? 1;
+  const valueIdx = getColIndex(colIndexByName, ["value","price","cost","amount"]);
+
+  const tbody = table.tBodies[0] || table;
+  rows = Array.from(tbody.querySelectorAll("tr")).filter(tr => tr.children.length);
+
+  // Format value cells with £
+  if (valueIdx !== null) {
+    rows.forEach(tr => {
+      const cell = tr.children[valueIdx];
+      if (!cell) return;
+      const raw = cell.textContent.trim();
+      if (raw && !raw.startsWith("£")) {
+        // try to preserve numeric format
+        const num = parseFloat(raw.replace(/[^\d.-]/g, ""));
+        if (!isNaN(num)) {
+          cell.textContent = "£" + num.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } else {
+          cell.textContent = "£" + raw;
+        }
+      }
+    });
+  }
+
+  populateFilters();
+  ensureEventsWired();
+  applyFilters();
+}
+
+
     function escapeHtml(s) {
       return s.replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
     }
