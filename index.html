@@ -201,15 +201,16 @@
           <input id="searchInput" type="search" placeholder="Search inventory…" aria-label="Search inventory" />
         </div>
         <div class="field">
-          <select id="platformSelect" aria-label="Filter by platform">
-            <option value="">All platforms</option>
-          </select>
-        </div>
-        <div class="field">
-          <select id="titleSelect" aria-label="Filter by title">
-            <option value="">All titles</option>
-          </select>
-        </div>
+  <select id="platformSelect" aria-label="Filter by platform">
+    <option value="">All platforms</option>
+  </select>
+</div>
+<div class="field">
+  <select id="locationSelect" aria-label="Filter by location">
+    <option value="">All locations</option>
+  </select>
+</div>
+
         <div class="field" style="display:flex; gap:8px;">
           <button class="btn" id="applyBtn" title="Apply filters">Apply</button>
           <button class="btn secondary" id="clearBtn" title="Clear filters">Clear</button>
@@ -40234,7 +40235,7 @@
   (function () {
     const wrap = document.querySelector(".table-wrap");
     const platformSelect = document.getElementById("platformSelect");
-    const titleSelect = document.getElementById("titleSelect");
+    const locationSelect = document.getElementById("locationSelect"); // changed
     const searchInput = document.getElementById("searchInput");
     const applyBtn = document.getElementById("applyBtn");
     const clearBtn = document.getElementById("clearBtn");
@@ -40243,11 +40244,10 @@
 
     let rows = [];
     let platformIdx = 0;
-    let titleIdx = 1;
-    let lastFilter = { q: "", platform: "", title: "" };
+    let locationIdx = 1; // now tracking "Location" instead of Title
+    let lastFilter = { q: "", platform: "", location: "" };
     let debounceTimer;
 
-    // Wait for table to be injected into .table-wrap
     const mo = new MutationObserver(() => {
       const table = wrap.querySelector("table");
       if (table && !table.dataset.enhanced) {
@@ -40255,41 +40255,29 @@
         table.dataset.enhanced = "true";
       }
     });
-
-    // Start observing container
     mo.observe(wrap, { childList: true, subtree: true });
 
-    // Also try immediate init in case the table is already present
     const existing = wrap.querySelector("table");
     if (existing && !existing.dataset.enhanced) {
       initialize(existing);
       existing.dataset.enhanced = "true";
     }
 
-    /* ---------------- core ---------------- */
-
     function initialize(table) {
-      // If table is replaced later, re-init via observer will call initialize again
-      // Set up indices from thead if available
       const headerCells = Array.from(table.querySelectorAll("thead th, thead td"));
       const colIndexByName = {};
       headerCells.forEach((th, idx) => {
         colIndexByName[th.textContent.trim().toLowerCase()] = idx;
       });
 
-      platformIdx = getColIndex(colIndexByName, ["platform", "console", "system"]) ?? 0;
-      titleIdx = getColIndex(colIndexByName, ["title", "name", "product"]) ?? 1;
+      platformIdx = getColIndex(colIndexByName, ["platform","console","system"]) ?? 0;
+      locationIdx = getColIndex(colIndexByName, ["location","branch","site"]) ?? 1;
 
       const tbody = table.tBodies[0] || table;
-      rows = Array.from(tbody.querySelectorAll("tr")).filter((tr) => tr.children.length);
+      rows = Array.from(tbody.querySelectorAll("tr")).filter(tr => tr.children.length);
 
-      // (Re)build dropdowns from current table data
       populateFilters();
-
-      // Wire events only once
       ensureEventsWired();
-
-      // Initial render
       applyFilters();
     }
 
@@ -40302,51 +40290,44 @@
 
     function populateFilters() {
       const platforms = new Set();
-      const titles = new Set();
+      const locations = new Set();
 
-      rows.forEach((tr) => {
+      rows.forEach(tr => {
         const cells = tr.children;
         const p = (cells[platformIdx]?.textContent || "").trim();
-        const t = (cells[titleIdx]?.textContent || "").trim();
+        const l = (cells[locationIdx]?.textContent || "").trim();
         if (p) platforms.add(p);
-        if (t) titles.add(t);
+        if (l) locations.add(l);
       });
 
-      fillSelect(platformSelect, ["", ...Array.from(platforms).sort()], {
-        "": "All platforms",
-      });
-      fillSelect(titleSelect, ["", ...Array.from(titles).sort()], {
-        "": "All titles",
-      });
+      fillSelect(platformSelect, ["", ...Array.from(platforms).sort()], { "": "All platforms" });
+      fillSelect(locationSelect, ["", ...Array.from(locations).sort()], { "": "All locations" });
     }
 
     function fillSelect(select, values, labels = {}) {
-      const current = select.value; // try preserve current selection
-      select.innerHTML = ""; // reset
+      const current = select.value;
+      select.innerHTML = "";
       const frag = document.createDocumentFragment();
-      values.forEach((val) => {
+      values.forEach(val => {
         const opt = document.createElement("option");
         opt.value = val;
         opt.textContent = labels[val] ?? val;
         frag.appendChild(opt);
       });
       select.appendChild(frag);
-      // restore value if still present
-      if ([...select.options].some((o) => o.value === current)) {
+      if ([...select.options].some(o => o.value === current)) {
         select.value = current;
       }
     }
 
     function ensureEventsWired() {
-      // Debounced input
       searchInput.addEventListener("input", debounce(applyFilters, 200));
       platformSelect.addEventListener("change", applyFilters);
-      titleSelect.addEventListener("change", applyFilters);
+      locationSelect.addEventListener("change", applyFilters);
       applyBtn.addEventListener("click", applyFilters);
       clearBtn.addEventListener("click", clearFilters);
 
-      // Enter key applies immediately
-      searchInput.addEventListener("keydown", (e) => {
+      searchInput.addEventListener("keydown", e => {
         if (e.key === "Enter") {
           e.preventDefault();
           applyFilters();
@@ -40367,25 +40348,25 @@
 
     function applyFilters() {
       const q = normalize(searchInput.value);
-      const platform = platformSelect.value; // keep exact match for dropdown filters
-      const title = titleSelect.value;
-      lastFilter = { q, platform, title };
+      const platform = platformSelect.value;
+      const location = locationSelect.value;
+      lastFilter = { q, platform, location };
 
       let shown = 0;
 
-      rows.forEach((tr) => {
+      rows.forEach(tr => {
         const cells = tr.children;
         if (!cells.length) return;
 
         const rowText = normalize(tr.textContent);
         const rowPlatform = (cells[platformIdx]?.textContent || "").trim();
-        const rowTitle = (cells[titleIdx]?.textContent || "").trim();
+        const rowLocation = (cells[locationIdx]?.textContent || "").trim();
 
         const matchesSearch = !q || rowText.includes(q);
         const matchesPlatform = !platform || rowPlatform === platform;
-        const matchesTitle = !title || rowTitle === title;
+        const matchesLocation = !location || rowLocation === location;
 
-        const show = matchesSearch && matchesPlatform && matchesTitle;
+        const show = matchesSearch && matchesPlatform && matchesLocation;
         tr.style.display = show ? "" : "none";
         if (show) shown++;
       });
@@ -40397,7 +40378,7 @@
     function clearFilters() {
       searchInput.value = "";
       platformSelect.value = "";
-      titleSelect.value = "";
+      locationSelect.value = "";
       applyFilters();
     }
 
@@ -40405,17 +40386,18 @@
       const parts = [];
       if (lastFilter.q) parts.push(`Search: “${escapeHtml(lastFilter.q)}”`);
       if (lastFilter.platform) parts.push(`Platform: ${escapeHtml(lastFilter.platform)}`);
-      if (lastFilter.title) parts.push(`Title: ${escapeHtml(lastFilter.title)}`);
+      if (lastFilter.location) parts.push(`Location: ${escapeHtml(lastFilter.location)}`);
       activeFiltersEl.innerHTML = parts.length
         ? "Filters — " + parts.join(" · ")
         : "No filters applied";
     }
 
     function escapeHtml(s) {
-      return s.replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+      return s.replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
     }
   })();
 </script>
+
 
 </body>
 </html>
