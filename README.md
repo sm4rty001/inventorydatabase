@@ -1,6 +1,6 @@
 # Inventory Database 
 
-A small static web app for browsing and exploring a collection of retro-computing items. The site renders an inventory table and provides client-side search, platform/location filters, value formatting and an image-search drawer for item art.
+A small static web app for browsing and exploring a collection of retro computing items. The site renders an inventory table and provides client side search, platform/location filters, value formatting and an image search drawer for item art.
 
 ---
 
@@ -13,7 +13,7 @@ A small static web app for browsing and exploring a collection of retro-computin
 - [How to Run](#how-to-run)
 - [Regenerating the HTML from the spreadsheet](#regenerating-the-html-from-the-spreadsheet)
 - [Potential Improvements](#potential-improvements)
-- [Contributing](#contributing)
+- [Personal Development](#personal-development)
 
 ---
 
@@ -21,17 +21,17 @@ A small static web app for browsing and exploring a collection of retro-computin
 
 This repository contains a lightweight Inventory Viewer implemented as static HTML, CSS and JavaScript. The inventory data is provided as a spreadsheet (`inventory.xlsx`) which is converted to an HTML table that can be viewed locally via `index.html` or `inventory.html`.
 
-The UI supports typing a search term, filtering by platform and location, and clicking rows to open an inline image search panel (supports Google/Bing/Wikipedia/Unsplash when API keys are available).
+The UI supports typing a search term, filtering by platform and location and clicking rows to open an inline image search panel (supports Google/Bing/Wikipedia/Unsplash when API keys are available).
 
 ---
 
 ## Features 
 
-- Fast client-side search and filter by platform and location
-- Automatic currency formatting for the **Value** column (displays as `£`)
-- Click-a-row image search drawer for item artwork
+- Fast client side search and filter by platform and location
+- Automatic currency formatting for the **Value** column (displays as `£`) 
+- Clicking a row opens an image search drawer for item artwork
 - Accessible controls (ARIA labels) and responsive layout
-- Simple, single-file deployment (drop into any static host)
+- Simple single file deployment (drop into any static host)
 - Example generator scripts: **Python** (`tools/generate_table.py`) and **PowerShell** (`tools/generate_table.ps1`) to convert `inventory.xlsx` into an HTML table stored externally.
 
 ---
@@ -39,7 +39,7 @@ The UI supports typing a search term, filtering by platform and location, and cl
 ## Project Structure 
 
 - `index.html` — main interactive viewer (search, filters, image drawer)
-- `inventory.html` — static table-only page (exported HTML)
+- `inventory.html` — static table only page (exported HTML)
 - `template.html` — simple template used to inject the generated table
 - `inventory.xlsx` — canonical data source (spreadsheet)
 - `styles.css` — styling for the viewer
@@ -51,13 +51,13 @@ The UI supports typing a search term, filtering by platform and location, and cl
 
 Data is stored in `inventory.xlsx`. The spreadsheet is converted to an HTML `<table>` (see `template.html`) and the page JavaScript enhances the DOM to provide filtering, formatting and image searching. No server-side runtime is required to use the viewer.
 
-Column names expected (case-insensitive): `Platform`, `Title`, `Manufacturer`, `Format`, `CaseType`, `Value`, `Location`.
+Column names expected (case insensitive): `Platform`, `Title`, `Manufacturer`, `Format`, `CaseType`, `Value`, `Location`.
 
 ---
 
 ## Control Flow
 
-- On page load the script finds the table and builds an in-memory list of rows
+- On page load the script finds the table and builds an in memory list of rows
 - Filters (`search`, `platform`, `location`) are populated from table values
 - Typing or changing filters runs a debounced `applyFilters()` that shows/hides rows
 - Clicking a row composes a search query (Title + Platform + Manufacturer) and opens the image drawer
