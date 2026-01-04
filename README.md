@@ -1,4 +1,4 @@
-# Inventory Database / Inventory Viewer
+# Inventory Database 
 
 A small static web app for browsing and exploring a collection of retro-computing items. The site renders an inventory table and provides client-side search, platform/location filters, value formatting and an image-search drawer for item art.
 
