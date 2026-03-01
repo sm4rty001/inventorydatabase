@@ -1,27 +1,757 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Inventory Viewer</title>
+  <!-- Professional font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Calibri, sans-serif; margin: 20px; }
-    h2 { margin-bottom: 10px; }
-    table {
-      border-collapse: collapse;
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1b1f24;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-600: #1d4ed8;
+      --border: #e5e7eb;
+      --chip: #eef2ff;
+      --radius: 14px;
+      --shadow: 0 8px 22px rgba(16,24,40,0.08);
+      --shadow-sm: 0 2px 10px rgba(16,24,40,0.06);
+      --focus: 0 0 0 3px rgba(37,99,235,0.25);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .container{
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .header{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    h1{
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    .toolbar{
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr auto;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .controls{
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1.3fr 1fr 1fr auto;
+    }
+
+    .field{ position: relative; }
+    .field input[type="search"],
+    .field select{
       width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      box-shadow: var(--shadow-sm);
+      outline: none;
+      font-size: 0.95rem;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    .field input[type="search"]:focus,
+    .field select:focus{
+      border-color: var(--primary);
+      box-shadow: var(--focus);
+    }
+
+    .btn{
+      appearance: none;
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background .15s ease, transform .02s ease;
+      white-space: nowrap;
+    }
+    .btn.secondary{
+      color: var(--primary);
+      background: transparent;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn:hover{ background: var(--primary-600); }
+    .btn.secondary:hover{ background: var(--chip); }
+
+    .meta{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      background: #fafbff;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .chip{
+      background: var(--chip);
+      color: var(--primary-600);
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #e0e7ff;
+      font-weight: 600;
+      font-size: 0.82rem;
+    }
+
+    .table-wrap{ overflow: auto; }
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      min-width: 720px;
+      background: #fff;
     }
     th, td {
-      border: 1px solid #ccc;
-      padding: 6px;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 14px;
       text-align: left;
+      font-size: 0.95rem;
     }
     th {
-      background: #f0f0f0;
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      z-index: 1;
+      font-weight: 600;
+      color: #334155;
     }
+    tr:hover td{ background: #fafafa; }
+    table thead th:first-child { border-top-left-radius: 12px; }
+    table thead th:last-child  { border-top-right-radius: 12px; }
+    table tbody tr:last-child td:first-child{ border-bottom-left-radius: 12px; }
+    table tbody tr:last-child td:last-child { border-bottom-right-radius: 12px; }
+
+    @media (max-width: 720px){
+      .controls{ grid-template-columns: 1fr; }
+      .toolbar{ grid-template-columns: 1fr; }
+      .meta{ flex-wrap: wrap; }
+    }
+
+    /* ===== Image Search Panel (right drawer) ===== */
+    .drawer-backdrop{
+      position: fixed; inset: 0; background: rgba(0,0,0,.25);
+      opacity: 0; pointer-events: none; transition: opacity .2s ease;
+    }
+    .drawer{
+      position: fixed; top: 0; right: 0; height: 100%; width: 520px; max-width: 96%;
+      background: #fff; border-left: 1px solid var(--border); box-shadow: var(--shadow);
+      transform: translateX(102%); transition: transform .25s ease;
+      display: grid; grid-template-rows: auto 1fr; z-index: 50;
+    }
+    .drawer.open{ transform: translateX(0); }
+    .drawer-backdrop.open{ opacity: 1; pointer-events: auto; }
+    .drawer .panel-header{
+      padding: 14px 14px; display:flex; align-items:center; justify-content:space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .drawer .panel-header h3{ margin:0; font-size:1.05rem; }
+    .icon-btn{
+      appearance:none; border:1px solid var(--border); background:#fff; border-radius:10px; padding:6px 10px; cursor:pointer;
+    }
+    .panel-body{ padding: 14px; overflow:auto; display:grid; gap:12px; }
+    .search-controls{ display:grid; gap:8px; grid-template-columns: 1fr auto; align-items:center; }
+    .search-controls .row{ grid-column: 1 / -1; display:flex; gap:8px; }
+    .img-result{
+      background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px;
+    }
+    .hero{ position:relative; overflow:hidden; border-radius:12px; border:1px solid var(--border); aspect-ratio:16/9; background:#f3f4f6; display:flex; align-items:center; justify-content:center; }
+    .hero img{ width:100%; height:100%; object-fit:contain; }
+    .caption{ font-size:.9rem; color:#4b5563; margin-top:6px; }
+    .loader{height:4px; background:#eef2ff; border-radius:999px; overflow:hidden}
+    .loader>i{display:block; height:100%; width:30%; background: linear-gradient(90deg, transparent, var(--primary), transparent); animation: load 1.2s infinite}
+    @keyframes load{0%{transform:translateX(-100%)} 100%{transform:translateX(350%)}}
+    .empty{ color:#6b7280; padding:8px 0; }
+
+    /* Grid for multi-result selection */
+    .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap:10px; }
+    .thumb{ position:relative; overflow:hidden; border-radius:10px; border:1px solid var(--border); background:#f3f4f6; aspect-ratio:1/1; cursor:pointer; }
+    .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
   </style>
 </head>
 <body>
-  <h2>Inventory Availability</h2>
-  {{TABLE_DATA}}
+  <div class="container">
+    <div class="header">
+      <h1>Inventory Availability</h1>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="field">
+          <input id="searchInput" type="search" placeholder="Search inventory…" aria-label="Search inventory" />
+        </div>
+        <div class="field">
+          <select id="platformSelect" aria-label="Filter by platform">
+            <option value="">All platforms</option>
+          </select>
+        </div>
+        <div class="field">
+          <select id="locationSelect" aria-label="Filter by location">
+            <option value="">All locations</option>
+          </select>
+        </div>
+        <div class="field" style="display:flex; gap:8px;">
+          <button class="btn" id="applyBtn" title="Apply filters">Apply</button>
+          <button class="btn secondary" id="clearBtn" title="Clear filters">Clear</button>
+        </div>
+      </div>
+
+      <div class="meta">
+        <span>Showing</span>
+        <span class="chip" id="countChip">0</span>
+        <span id="activeFilters" aria-live="polite"></span>
+      </div>
+
+      <div class="table-wrap">
+        <!-- Your server injects the whole table here -->
+        {{TABLE_DATA}}
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Image Search Drawer ===== -->
+  <div id="imgDrawerBackdrop" class="drawer-backdrop" aria-hidden="true"></div>
+  <aside id="imgDrawer" class="drawer" aria-hidden="true" aria-label="Image search panel">
+    <div class="panel-header">
+      <h3>Image Search</h3>
+      <button id="drawerClose" class="icon-btn" title="Close">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="search-controls">
+        <div class="row">
+          <input id="imgQuery" type="search" placeholder="Search term…" />
+          <select id="fitMode" style="max-width:140px">
+            <option value="contain">Fit</option>
+            <option value="cover">Fill</option>
+          </select>
+        </div>
+        <div class="row">
+          <button class="btn" id="imgGo">Search</button>
+          <button class="btn secondary" id="imgWrong">Wrong image?</button>
+          <select id="imgProvider" style="display:none; max-width:220px">
+            <option value="wikipedia">Wikipedia (best match)</option>
+            <option value="commons">Wikimedia</option>
+            <option value="google">Google Images</option>
+            <option value="bing">Bing Images</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="imgResult" class="img-result">
+        <div class="empty">Click a row in the inventory to search its cover/art.</div>
+      </div>
+    </div>
+  </aside>
+
+<script>
+  /* ================= Inventory Filtering (your existing logic, kept) ================= */
+  (function () {
+    const wrap = document.querySelector(".table-wrap");
+    const platformSelect = document.getElementById("platformSelect");
+    const locationSelect = document.getElementById("locationSelect");
+    const searchInput = document.getElementById("searchInput");
+    const applyBtn = document.getElementById("applyBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const countChip = document.getElementById("countChip");
+    const activeFiltersEl = document.getElementById("activeFilters");
+
+    let rows = [];
+    let platformIdx = 0;
+    let locationIdx = 1;
+    let lastFilter = { q: "", platform: "", location: "" };
+    let debounceTimer;
+
+    const mo = new MutationObserver(() => {
+      const table = wrap.querySelector("table");
+      if (table && !table.dataset.enhanced) {
+        initialize(table);
+        table.dataset.enhanced = "true";
+      }
+    });
+    mo.observe(wrap, { childList: true, subtree: true });
+
+    const existing = wrap.querySelector("table");
+    if (existing && !existing.dataset.enhanced) {
+      initialize(existing);
+      existing.dataset.enhanced = "true";
+    }
+
+    function getColIndex(map, names) {
+      for (const n of names) {
+        if (Object.prototype.hasOwnProperty.call(map, n)) return map[n];
+      }
+      return null;
+    }
+
+    function populateFilters() {
+      const platforms = new Set();
+      const locations = new Set();
+
+      rows.forEach(tr => {
+        const cells = tr.children;
+        const p = (cells[platformIdx]?.textContent || "").trim();
+        const l = (cells[locationIdx]?.textContent || "").trim();
+        if (p) platforms.add(p);
+        if (l) locations.add(l);
+      });
+
+      fillSelect(platformSelect, ["", ...Array.from(platforms).sort()], { "": "All platforms" });
+      fillSelect(locationSelect, ["", ...Array.from(locations).sort()], { "": "All locations" });
+    }
+
+    function fillSelect(select, values, labels = {}) {
+      const current = select.value;
+      select.innerHTML = "";
+      const frag = document.createDocumentFragment();
+      values.forEach(val => {
+        const opt = document.createElement("option");
+        opt.value = val;
+        opt.textContent = labels[val] ?? val;
+        frag.appendChild(opt);
+      });
+      select.appendChild(frag);
+      if ([...select.options].some(o => o.value === current)) {
+        select.value = current;
+      }
+    }
+
+    function ensureEventsWired() {
+      searchInput.addEventListener("input", debounce(applyFilters, 200));
+      platformSelect.addEventListener("change", applyFilters);
+      locationSelect.addEventListener("change", applyFilters);
+      applyBtn.addEventListener("click", applyFilters);
+      clearBtn.addEventListener("click", clearFilters);
+
+      searchInput.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          applyFilters();
+        }
+      });
+    }
+
+    function debounce(fn, delay) {
+      return function (...args) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+
+    function normalize(s) { return (s || "").toString().trim().toLowerCase(); }
+
+    function applyFilters() {
+      const q = normalize(searchInput.value);
+      const platform = platformSelect.value;
+      const location = locationSelect.value;
+      lastFilter = { q, platform, location };
+
+      let shown = 0;
+
+      rows.forEach(tr => {
+        const cells = tr.children;
+        if (!cells.length) return;
+
+        const rowText = normalize(tr.textContent);
+        const rowPlatform = (cells[platformIdx]?.textContent || "").trim();
+        const rowLocation = (cells[locationIdx]?.textContent || "").trim();
+
+        const matchesSearch = !q || rowText.includes(q);
+        const matchesPlatform = !platform || rowPlatform === platform;
+        const matchesLocation = !location || rowLocation === location;
+
+        const show = matchesSearch && matchesPlatform && matchesLocation;
+        tr.style.display = show ? "" : "none";
+        if (show) shown++;
+      });
+
+      countChip.textContent = String(shown);
+      renderActiveFilters();
+    }
+
+    function clearFilters() {
+      searchInput.value = "";
+      platformSelect.value = "";
+      locationSelect.value = "";
+      applyFilters();
+    }
+
+    function renderActiveFilters() {
+      const parts = [];
+      if (lastFilter.q) parts.push(`Search: “${escapeHtml(lastFilter.q)}”`);
+      if (lastFilter.platform) parts.push(`Platform: ${escapeHtml(lastFilter.platform)}`);
+      if (lastFilter.location) parts.push(`Location: ${escapeHtml(lastFilter.location)}`);
+      activeFiltersEl.innerHTML = parts.length ? "Filters — " + parts.join(" · ") : "No filters applied";
+    }
+
+    function initialize(table) {
+      const headerCells = Array.from(table.querySelectorAll("thead th, thead td"));
+      const colIndexByName = {};
+      headerCells.forEach((th, idx) => {
+        colIndexByName[th.textContent.trim().toLowerCase()] = idx;
+      });
+
+      // locate common columns
+      platformIdx = getColIndex(colIndexByName, ["platform","console","system"]) ?? 0;
+      locationIdx = getColIndex(colIndexByName, ["location","branch","site"]) ?? 1;
+      const valueIdx = getColIndex(colIndexByName, ["value","price","cost","amount"]);
+      const titleIdx = getColIndex(colIndexByName, ["title","name"]);
+      const manufacturerIdx = getColIndex(colIndexByName, ["manufacturer","publisher","maker"]);
+
+      const tbody = table.tBodies[0] || table;
+      rows = Array.from(tbody.querySelectorAll("tr")).filter(tr => tr.children.length);
+
+      // Format value cells with £ symbol
+      if (valueIdx !== null) {
+        rows.forEach(tr => {
+          const cell = tr.children[valueIdx];
+          if (!cell) return;
+          const raw = cell.textContent.trim();
+          if (raw && !raw.startsWith("£")) {
+            const num = parseFloat(raw.replace(/[^\d.-]/g, ""));
+            if (!isNaN(num)) {
+              cell.textContent = "£" + num.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            } else {
+              cell.textContent = "£" + raw;
+            }
+          }
+        });
+      }
+
+      // === Wire row click -> open image search panel ===
+      table.style.cursor = 'pointer';
+      table.title = 'Click a row to search images for that item';
+      table.addEventListener('click', (ev) => {
+        const tr = ev.target.closest('tbody tr');
+        if(!tr) return;
+        const cells = Array.from(tr.children);
+        const title = titleIdx != null ? (cells[titleIdx]?.textContent||'').trim() : '';
+        const platform = platformIdx != null ? (cells[platformIdx]?.textContent||'').trim() : '';
+        const manuf = manufacturerIdx != null ? (cells[manufacturerIdx]?.textContent||'').trim() : '';
+        const query = [title, platform, manuf].filter(Boolean).join(' ');
+        openImageDrawer(query || title || platform || ''); // open and search
+      });
+
+      populateFilters();
+      ensureEventsWired();
+      applyFilters();
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
+    }
+  })();
+
+  /* ================= Image Search Panel (inline, no new tabs required) ================= */
+
+  // ---- Config (leave blank if you don't have keys; those providers will just return no results) ----
+  const IMG_CONFIG = {
+    GOOGLE_KEY: '',  // Google Custom Search JSON API key
+    GOOGLE_CX: '',   // Google CSE ID (Image Search enabled)
+    BING_KEY:  '',   // Azure Bing Image Search v7 key
+    UNSPLASH_KEY: '' // optional fallback for nicer photos
+  };
+
+  // Elements
+  const drawer = document.getElementById('imgDrawer');
+  const backdrop = document.getElementById('imgDrawerBackdrop');
+  const drawerClose = document.getElementById('drawerClose');
+  const imgQuery = document.getElementById('imgQuery');
+  const fitMode = document.getElementById('fitMode');
+  const imgGo = document.getElementById('imgGo');
+  const imgWrong = document.getElementById('imgWrong');
+  const imgProvider = document.getElementById('imgProvider');
+  const imgResult = document.getElementById('imgResult');
+
+  function openImageDrawer(query){
+    imgQuery.value = query || '';
+    showDrawer(true);
+    if(query) runPrimarySearch(query);
+  }
+  function showDrawer(open){
+    drawer.classList.toggle('open', open);
+    backdrop.classList.toggle('open', open);
+    drawer.setAttribute('aria-hidden', String(!open));
+    backdrop.setAttribute('aria-hidden', String(!open));
+  }
+  drawerClose.addEventListener('click', () => showDrawer(false));
+  backdrop.addEventListener('click', () => showDrawer(false));
+
+  // Basic rendering helpers
+  function setLoading(isLoading){
+    if(isLoading){
+      imgResult.innerHTML = `<div class="loader"><i></i></div>`;
+    }
+  }
+  function renderSingleImage({src, alt, href, credit}){
+    const hero = document.createElement('div');
+    hero.className = 'hero';
+    const img = document.createElement('img');
+    img.src = src; img.alt = alt || 'Image';
+    img.style.objectFit = (fitMode.value === 'cover') ? 'cover' : 'contain';
+    hero.appendChild(img);
+
+    const wrap = document.createElement('div');
+    wrap.appendChild(hero);
+    const cap = document.createElement('div');
+    cap.className = 'caption';
+    cap.innerHTML = credit || '';
+    wrap.appendChild(cap);
+
+    imgResult.innerHTML = '';
+    imgResult.appendChild(wrap);
+
+    // reveal provider switch
+    imgProvider.style.display = 'inline-block';
+  }
+  function renderImageGrid(items, query){
+    if(!items || !items.length){
+      imgResult.innerHTML = `<div class="empty">No alternatives found for "${query}".</div>`;
+      return;
+    }
+    const grid = document.createElement('div'); grid.className = 'grid';
+    items.forEach(it => {
+      const t = document.createElement('div'); t.className='thumb'; t.title = it.alt || query;
+      const img = document.createElement('img'); img.src = it.src; img.alt = it.alt || 'Image';
+      t.appendChild(img);
+      t.addEventListener('click', () => renderSingleImage(it));
+      grid.appendChild(t);
+    });
+    imgResult.innerHTML = ''; imgResult.appendChild(grid);
+  }
+  function showNoResult(query, msg){
+    imgResult.innerHTML = `<div class="empty">${msg || `No image found for "${query}".`}</div>`;
+    imgProvider.style.display = 'inline-block';
+  }
+
+  // Primary search: Wikipedia best-match first (box-art friendly), fallback Unsplash single if configured
+  async function runPrimarySearch(query){
+    setLoading(true);
+    try{
+      const best = await wikipediaBestSingle(query);
+      if(best){ renderSingleImage(best); return; }
+    } catch(_) {}
+    try{
+      const uns = await unsplashSingle(query);
+      if(uns){ renderSingleImage(uns); return; }
+    } catch(_) {}
+    showNoResult(query, `No image found for "${query}".`);
+  }
+
+  // === Providers (single + many) ===
+  async function wikiSummary(title){
+    const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, { headers:{'Accept':'application/json'} });
+    if(!res.ok) throw new Error('No summary');
+    return res.json();
+  }
+  async function wikiSearch(query){
+    const res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`);
+    if(!res.ok) throw new Error('Search failed');
+    return res.json();
+  }
+  async function wikipediaBestSingle(query){
+    try{
+      const s = await wikiSummary(query);
+      const src = (s.originalimage && s.originalimage.source) || (s.thumbnail && s.thumbnail.source);
+      if(src){
+        return {
+          src, alt: s.title || query,
+          href: s.content_urls?.desktop?.page || s.content_urls?.mobile?.page,
+          credit: `Image from <a href="${s.content_urls?.desktop?.page || s.content_urls?.mobile?.page}" target="_blank" rel="noopener noreferrer">Wikipedia</a>`
+        };
+      }
+    }catch(_){}
+    try{
+      const r = await wikiSearch(query);
+      const top = r?.query?.search?.[0];
+      if(top){
+        const s = await wikiSummary(top.title);
+        const src = (s.originalimage && s.originalimage.source) || (s.thumbnail && s.thumbnail.source);
+        if(src){
+          return {
+            src, alt: s.title || top.title,
+            href: s.content_urls?.desktop?.page || s.content_urls?.mobile?.page,
+            credit: `Image from <a href="${s.content_urls?.desktop?.page || s.content_urls?.mobile?.page}" target="_blank" rel="noopener noreferrer">Wikipedia</a>`
+          };
+        }
+      }
+    }catch(_){}
+    return null;
+  }
+
+  // Wikimedia Commons (many)
+  async function commonsMany(query, count=12){
+    const params = new URLSearchParams({
+      action:'query', format:'json', origin:'*',
+      generator:'search', gsrsearch:query, gsrnamespace:'6', gsrlimit:String(count),
+      prop:'imageinfo', iiprop:'url', iiurlwidth:'1200'
+    });
+    const res = await fetch(`https://commons.wikimedia.org/w/api.php?${params.toString()}`);
+    if(!res.ok) return [];
+    const data = await res.json().catch(()=>null);
+    const pages = (data && data.query && data.query.pages) || {};
+    return Object.values(pages).map(first => {
+      const info = first && first.imageinfo && first.imageinfo[0];
+      if(!info) return null;
+      return {
+        src: info.thumburl || info.url,
+        alt: first.title || query,
+        href: info.descriptionurl || `https://commons.wikimedia.org/wiki/${encodeURIComponent(first.title)}`,
+        credit: `Image from <a href="${info.descriptionurl || `https://commons.wikimedia.org/wiki/${encodeURIComponent(first.title)}`}" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a>`
+      };
+    }).filter(Boolean);
+  }
+
+  // Google Images (many) — requires keys
+  async function googleImagesMany(query, count=12){
+    if(!IMG_CONFIG.GOOGLE_KEY || !IMG_CONFIG.GOOGLE_CX) return [];
+    const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&searchType=image&num=${count}&key=${encodeURIComponent(IMG_CONFIG.GOOGLE_KEY)}&cx=${encodeURIComponent(IMG_CONFIG.GOOGLE_CX)}`;
+    const res = await fetch(url);
+    if(!res.ok) return [];
+    const data = await res.json().catch(()=>null);
+    const items = (data.items || []);
+    return items.map(it => ({
+      src: it.link,
+      alt: it.title || query,
+      href: it.image?.contextLink || it.link,
+      credit: `Image via <a href="${it.image?.contextLink || it.link}" target="_blank" rel="noopener noreferrer">Google Images</a>`
+    })).filter(x=>x.src);
+  }
+
+  // Bing Images (many) — requires key
+  async function bingImagesMany(query, count=12){
+    if(!IMG_CONFIG.BING_KEY) return [];
+    const url = `https://api.bing.microsoft.com/v7.0/images/search?q=${encodeURIComponent(query)}&count=${count}&safeSearch=Moderate`;
+    const res = await fetch(url, { headers: { 'Ocp-Apim-Subscription-Key': IMG_CONFIG.BING_KEY } });
+    if(!res.ok) return [];
+    const data = await res.json().catch(()=>null);
+    return (data.value || []).map(it => ({
+      src: it.contentUrl,
+      alt: it.name || query,
+      href: it.hostPageUrl || it.contentUrl,
+      credit: `Image via <a href="${it.hostPageUrl || it.contentUrl}" target="_blank" rel="noopener noreferrer">Bing Images</a>`
+    })).filter(x=>x.src);
+  }
+
+  // Unsplash single (optional fallback for nicer photos)
+  async function unsplashSingle(query){
+    if(!IMG_CONFIG.UNSPLASH_KEY) return null;
+    const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1`, {
+      headers: { Authorization: `Client-ID ${IMG_CONFIG.UNSPLASH_KEY}` }
+    });
+    if(!res.ok) return null;
+    const data = await res.json().catch(()=>null);
+    const p = data && data.results && data.results[0];
+    if(!p) return null;
+    return {
+      src: p.urls?.regular || p.urls?.small,
+      alt: p.alt_description || query,
+      href: p.links?.html,
+      credit: `Photo by <a href="${p.user?.links?.html}" target="_blank" rel="noopener noreferrer">${p.user?.name || 'Photographer'}</a> on Unsplash`
+    };
+  }
+
+  // Provider dispatcher for the "Wrong image?" flow (grid)
+  async function searchManyByProvider(provider, query){
+    if(provider === 'wikipedia'){
+      // build grid from top ~12 pages with images
+      const out = [];
+      try{
+        const r = await wikiSearch(query);
+        const hits = (r && r.query && r.query.search) ? r.query.search.slice(0,12) : [];
+        for(const h of hits){
+          try{
+            const s = await wikiSummary(h.title);
+            const src = (s.originalimage && s.originalimage.source) || (s.thumbnail && s.thumbnail.source);
+            if(src){
+              out.push({
+                src, alt: s.title || h.title,
+                href: s.content_urls?.desktop?.page || s.content_urls?.mobile?.page,
+                credit: `Image from <a href="${s.content_urls?.desktop?.page || s.content_urls?.mobile?.page}" target="_blank" rel="noopener noreferrer">Wikipedia</a>`
+              });
+            }
+          }catch(_){}
+        }
+      }catch(_){}
+      return out;
+    }
+    if(provider === 'commons')  return await commonsMany(query, 12);
+    if(provider === 'google')   return await googleImagesMany(query, 12);
+    if(provider === 'bing')     return await bingImagesMany(query, 12);
+    return [];
+  }
+
+  // Events for panel
+  imgGo.addEventListener('click', () => {
+    const q = imgQuery.value.trim();
+    if(!q) return;
+    runPrimarySearch(q);
+  });
+  imgWrong.addEventListener('click', () => {
+    imgProvider.style.display = (imgProvider.style.display === 'none' || !imgProvider.style.display) ? 'inline-block' : 'none';
+  });
+  imgProvider.addEventListener('change', async () => {
+    const provider = imgProvider.value;
+    const q = imgQuery.value.trim();
+    if(!q) return;
+    setLoading(true);
+    try{
+      const items = await searchManyByProvider(provider, q);
+      if(items && items.length){ renderImageGrid(items, q); }
+      else{
+        const hint = (provider === 'google' && (!IMG_CONFIG.GOOGLE_KEY || !IMG_CONFIG.GOOGLE_CX)) ? ' (set GOOGLE_KEY & GOOGLE_CX)' :
+                     (provider === 'bing' && !IMG_CONFIG.BING_KEY) ? ' (set BING_KEY)' : '';
+        showNoResult(q, `No ${provider} images for "${q}"${hint}.`);
+      }
+    }catch(err){
+      showNoResult(q, err.message || 'No image found.');
+    }
+  });
+
+  // Also expose a tiny helper if you ever want to trigger programmatically
+  window.openImageSearchFor = openImageDrawer;
+</script>
 </body>
 </html>
