@@ -45650,6 +45650,7 @@
             <option value="commons">Wikimedia</option>
             <option value="google">Google Images</option>
             <option value="bing">Bing Images</option>
+            <option value="googleSearch">Google Search (web results)</option>
           </select>
         </div>
       </div>
@@ -45940,7 +45941,7 @@
     imgProvider.style.display = 'inline-block';
   }
 
-  // Primary search: Wikipedia best-match first (box-art friendly), fallback Unsplash single if configured
+  // Primary search: Wikipedia best-match first (box-art friendly), then Unsplash, then Google if keys present
   async function runPrimarySearch(query){
     setLoading(true);
     try{
@@ -45950,6 +45951,10 @@
     try{
       const uns = await unsplashSingle(query);
       if(uns){ renderSingleImage(uns); return; }
+    } catch(_) {}
+    try{
+      const gg = await gooogleSearch(query);
+      if(gg){ renderSingleImage(gg); return; }
     } catch(_) {}
     showNoResult(query, `No image found for "${query}".`);
   }
@@ -45965,6 +45970,23 @@
     if(!res.ok) throw new Error('Search failed');
     return res.json();
   }
+
+  async function gooogleSearch(query) {
+    if(!IMG_CONFIG.GOOGLE_KEY || !IMG_CONFIG.GOOGLE_CX) return null;
+    const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&searchType=image&num=1&key=${encodeURIComponent(IMG_CONFIG.GOOGLE_KEY)}&cx=${encodeURIComponent(IMG_CONFIG.GOOGLE_CX)}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Google search failed');
+    const data = await res.json().catch(()=>null);
+    const item = (data.items || [])[0];   
+    if(!item) throw new Error('No Google results');
+    return {
+      src: item.link,
+      alt: item.title || query,
+      href: item.image?.contextLink || item.link,
+      credit: `Image via <a href="${item.image?.contextLink || item.link}" target="_blank" rel="noopener noreferrer">Google Images</a>`
+    };
+  }
+
   async function wikipediaBestSingle(query){
     try{
       const s = await wikiSummary(query);

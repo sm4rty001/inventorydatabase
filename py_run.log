@@ -1,20 +1,13 @@
-[2026-03-01 11:15:05] START exe=C:\Users\Admin\AppData\Local\Programs\Python\Python313\python.exe
-[2026-03-01 11:15:05] PYVER=3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
-[2026-03-01 11:15:05] CWD(before)=C:\Users\Admin\Desktop\Python
-[2026-03-01 11:15:05] CWD(after)=C:\Users\Admin\Documents\GitHub\inventorydatabase
-[2026-03-01 11:15:05] Connecting to SQL Server...
-[2026-03-01 11:15:05] Fetched 5040 rows
-[2026-03-01 11:15:06] Wrote C:\Users\Admin\Documents\GitHub\inventorydatabase\inventory.xlsx
-[2026-03-01 11:15:07] Wrote C:\Users\Admin\Documents\GitHub\inventorydatabase\index.html
-[2026-03-01 11:15:07] DB commit done
-[2026-03-01 11:15:07] DB connection closed
-[2026-03-01 11:15:07] git.exe resolved to: C:\Program Files\Git\cmd\git.EXE
-[2026-03-01 11:15:09] git push failed: To https://github.com/sm4rty001/inventorydatabase.git
- ! [rejected]        main -> main (fetch first)
-error: failed to push some refs to 'https://github.com/sm4rty001/inventorydatabase.git'
-hint: Updates were rejected because the remote contains work that you do not
-hint: have locally. This is usually caused by another repository pushing to
-hint: the same ref. If you want to integrate the remote changes, use
-hint: 'git pull' before pushing again.
-hint: See the 'Note about fast-forwards' in 'git push --help' for details.
-[2026-03-01 11:15:09] FINISH exit=0
+[2026-03-01 11:39:11] START exe=C:\Users\Admin\AppData\Local\Programs\Python\Python313\python.exe
+[2026-03-01 11:39:11] PYVER=3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+[2026-03-01 11:39:11] CWD(before)=C:\Users\Admin\Desktop\Python
+[2026-03-01 11:39:11] CWD(after)=C:\Users\Admin\Documents\GitHub\inventorydatabase
+[2026-03-01 11:39:11] Connecting to SQL Server...
+[2026-03-01 11:39:12] Fetched 5040 rows
+[2026-03-01 11:39:13] Wrote C:\Users\Admin\Documents\GitHub\inventorydatabase\inventory.xlsx
+[2026-03-01 11:39:13] Wrote C:\Users\Admin\Documents\GitHub\inventorydatabase\index.html
+[2026-03-01 11:39:13] DB commit done
+[2026-03-01 11:39:13] DB connection closed
+[2026-03-01 11:39:13] git.exe resolved to: C:\Program Files\Git\cmd\git.EXE
+[2026-03-01 11:39:16] git push OK
+[2026-03-01 11:39:16] FINISH exit=0
